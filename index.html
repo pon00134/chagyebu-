@@ -124,6 +124,38 @@
 
   .table-wrap{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow-x:auto; padding:4px 8px;}
   .status{font-size:12px;color:var(--ink-dim);margin-top:8px;}
+
+  .form-toggle{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 18px; margin-bottom:10px; cursor:pointer; user-select:none;
+  }
+  .form-toggle .ttl{font-size:14px;font-weight:500;}
+  .form-toggle .chev{color:var(--ink-dim);font-size:13px;transition:transform .15s;}
+  .form-toggle.open .chev{transform:rotate(180deg);}
+
+  .amount-preview{
+    grid-column:1/-1; background:var(--panel-2); border:1px solid var(--amber-dim);
+    border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .amount-preview .lbl{font-size:12px;color:var(--ink-dim);}
+  .amount-preview .val{font-family:'Roboto Mono',monospace;font-weight:700;font-size:18px;color:var(--amber);}
+
+  .export-row{display:flex; justify-content:flex-end; margin-bottom:10px;}
+
+  @media (max-width:600px){
+    body{padding:16px 10px 60px;}
+    .hero{flex-direction:column; align-items:flex-start; gap:14px;}
+    .hero > div:last-child{align-self:flex-end;}
+    .cards{grid-template-columns:repeat(2,1fr);}
+    .form-grid{grid-template-columns:1fr;}
+    .field input, .field select{padding:13px 12px; font-size:16px;}
+    .btn{width:100%; padding:14px; font-size:15px;}
+    .btn.secondary{width:auto;}
+    .tab{padding:12px 14px; font-size:15px;}
+    table{font-size:12px;}
+    th, td{padding:8px 6px;}
+  }
 </style>
 </head>
 <body>
@@ -187,27 +219,40 @@
   </div>
 
   <div class="panel active" id="panel-fuel">
-    <div class="form-card">
+    <div class="form-toggle" id="toggle-fuel" onclick="toggleForm('fuel')">
+      <span class="ttl">+ 주유 기록 추가</span>
+      <span class="chev">▾</span>
+    </div>
+    <div class="form-card" id="form-fuel" style="display:none;">
       <div class="form-grid">
         <div class="field"><label>날짜</label><input type="date" id="f-date"></div>
         <div class="field"><label>주유소 상호</label><input type="text" id="f-shop" placeholder="GS칼텍스 역삼주유소"></div>
         <div class="field full"><label>주소</label><input type="text" id="f-addr" placeholder="서울 강남구 테헤란로 123"></div>
         <div class="field"><label>주행거리(km)</label><input type="number" id="f-odo" placeholder="12000"></div>
-        <div class="field"><label>주유량(L)</label><input type="number" step="0.01" id="f-liter" placeholder="35.5"></div>
-        <div class="field"><label>리터당 단가(원)</label><input type="number" id="f-price" placeholder="1650"></div>
+        <div class="field"><label>주유량(L)</label><input type="number" step="0.01" id="f-liter" placeholder="35.5" oninput="updateFuelPreview()"></div>
+        <div class="field"><label>리터당 단가(원)</label><input type="number" id="f-price" placeholder="1650" oninput="updateFuelPreview()"></div>
         <div class="field">
           <label>결제수단</label>
           <select id="f-pay"><option>카드</option><option>현금</option><option>기타</option></select>
         </div>
         <div class="field full"><label>메모</label><input type="text" id="f-memo" placeholder="선택 입력"></div>
+        <div class="amount-preview">
+          <span class="lbl">예상 결제 금액</span>
+          <span class="val" id="f-preview">0원</span>
+        </div>
       </div>
       <button class="btn" onclick="addFuel()">주유 기록 추가</button>
     </div>
+    <div class="export-row"><button class="btn secondary" onclick="exportCSV('fuel')">CSV로 내보내기</button></div>
     <div class="table-wrap"><table id="table-fuel"></table></div>
   </div>
 
   <div class="panel" id="panel-maint">
-    <div class="form-card">
+    <div class="form-toggle" id="toggle-maint" onclick="toggleForm('maint')">
+      <span class="ttl">+ 정비 기록 추가</span>
+      <span class="chev">▾</span>
+    </div>
+    <div class="form-card" id="form-maint" style="display:none;">
       <div class="form-grid">
         <div class="field"><label>날짜</label><input type="date" id="m-date"></div>
         <div class="field"><label>항목</label><input type="text" id="m-item" placeholder="엔진오일 교체"></div>
@@ -219,11 +264,16 @@
       </div>
       <button class="btn" onclick="addMaint()">정비 기록 추가</button>
     </div>
+    <div class="export-row"><button class="btn secondary" onclick="exportCSV('maint')">CSV로 내보내기</button></div>
     <div class="table-wrap"><table id="table-maint"></table></div>
   </div>
 
   <div class="panel" id="panel-etc">
-    <div class="form-card">
+    <div class="form-toggle" id="toggle-etc" onclick="toggleForm('etc')">
+      <span class="ttl">+ 기록 추가</span>
+      <span class="chev">▾</span>
+    </div>
+    <div class="form-card" id="form-etc" style="display:none;">
       <div class="form-grid">
         <div class="field"><label>날짜</label><input type="date" id="e-date"></div>
         <div class="field"><label>항목</label><input type="text" id="e-item" placeholder="자동차보험료"></div>
@@ -236,6 +286,7 @@
       </div>
       <button class="btn" onclick="addEtc()">기록 추가</button>
     </div>
+    <div class="export-row"><button class="btn secondary" onclick="exportCSV('etc')">CSV로 내보내기</button></div>
     <div class="table-wrap"><table id="table-etc"></table></div>
   </div>
 
@@ -393,6 +444,82 @@ async function save(){
   }
 }
 
+function toggleForm(name){
+  const card = document.getElementById('form-'+name);
+  const toggle = document.getElementById('toggle-'+name);
+  const open = card.style.display !== 'none';
+  card.style.display = open ? 'none' : 'block';
+  toggle.classList.toggle('open', !open);
+  if(!open){
+    if(name === 'fuel') prefillLastOdo('f-odo');
+    if(name === 'maint') prefillLastOdo('m-odo');
+  }
+}
+
+function updateFuelPreview(){
+  const liter = parseFloat(document.getElementById('f-liter').value)||0;
+  const price = parseFloat(document.getElementById('f-price').value)||0;
+  document.getElementById('f-preview').textContent = won(liter*price);
+}
+
+function getLastOdo(){
+  if(!currentVehicleId) return null;
+  const fuelOdos = data.fuel.filter(r=>r.vehicleId===currentVehicleId).map(r=>({date:r.date, odo:r.odo}));
+  const maintOdos = data.maint.filter(r=>r.vehicleId===currentVehicleId).map(r=>({date:r.date, odo:r.odo}));
+  const all = fuelOdos.concat(maintOdos).filter(r=>r.odo>0);
+  if(all.length===0) return null;
+  all.sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:0));
+  return all[0].odo;
+}
+
+function prefillLastOdo(fieldId){
+  const field = document.getElementById(fieldId);
+  if(field.value) return;
+  const last = getLastOdo();
+  if(last){
+    field.value = last;
+    field.placeholder = '직전 기록: ' + km(last);
+  }
+}
+
+function csvEscape(v){
+  const s = String(v===undefined||v===null?'':v);
+  if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+
+function downloadCSV(filename, rows){
+  const bom = '\uFEFF';
+  const csv = bom + rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportCSV(type){
+  const vehicle = data.vehicles.find(v=>v.id===currentVehicleId);
+  const vLabel = vehicle ? vehicle.number : 'unknown';
+  if(type === 'fuel'){
+    const rows = [['날짜','주유소','주소','주행거리(km)','주유량(L)','단가(원)','결제수단','금액(원)','메모']];
+    data.fuel.filter(r=>r.vehicleId===currentVehicleId).sort((a,b)=>a.date<b.date?-1:1)
+      .forEach(r=>rows.push([r.date,r.shop,r.addr,r.odo,r.liter,r.price,r.pay,Math.round(r.liter*r.price),r.memo]));
+    downloadCSV(`차계부_주유_${vLabel}.csv`, rows);
+  } else if(type === 'maint'){
+    const rows = [['날짜','항목','정비소','금액(원)','주행거리(km)','다음예정(km)','메모']];
+    data.maint.filter(r=>r.vehicleId===currentVehicleId).sort((a,b)=>a.date<b.date?-1:1)
+      .forEach(r=>rows.push([r.date,r.item,r.shop,r.cost,r.odo,r.next,r.memo]));
+    downloadCSV(`차계부_정비_${vLabel}.csv`, rows);
+  } else if(type === 'etc'){
+    const rows = [['날짜','항목','주기','금액(원)','메모']];
+    data.etc.filter(r=>r.vehicleId===currentVehicleId).sort((a,b)=>a.date<b.date?-1:1)
+      .forEach(r=>rows.push([r.date,r.item,r.cycle,r.cost,r.memo]));
+    downloadCSV(`차계부_보험기타_${vLabel}.csv`, rows);
+  }
+}
+
 function manualSync(){
   localStorage.setItem('carlog-sync-url', getUrl());
   load();
@@ -463,7 +590,9 @@ function addFuel(){
   if(!v.date || !v.liter){ alert('날짜와 주유량은 필수입니다.'); return; }
   data.fuel.push(v);
   ['f-date','f-shop','f-addr','f-odo','f-liter','f-price','f-memo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-preview').textContent = '0원';
   save(); renderAll();
+  prefillLastOdo('f-odo');
 }
 function addMaint(){
   if(!currentVehicleId){ alert('먼저 차량을 등록/선택해주세요.'); return; }
@@ -481,6 +610,7 @@ function addMaint(){
   data.maint.push(v);
   ['m-date','m-item','m-shop','m-cost','m-odo','m-next','m-memo'].forEach(id=>document.getElementById(id).value='');
   save(); renderAll();
+  prefillLastOdo('m-odo');
 }
 function addEtc(){
   if(!currentVehicleId){ alert('먼저 차량을 등록/선택해주세요.'); return; }
