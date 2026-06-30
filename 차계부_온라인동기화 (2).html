@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>차계부</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Roboto+Mono:wght@500;700&display=swap');
+
+  :root{
+    --bg: #14181F;
+    --panel: #1C212B;
+    --panel-2: #232938;
+    --line: #2C3342;
+    --ink: #EDEFF3;
+    --ink-dim: #9AA3B5;
+    --amber: #F5A623;
+    --amber-dim: #6B4E1E;
+    --teal: #2BB6A3;
+    --red: #E2574C;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Noto Sans KR', sans-serif;
+    padding: 24px 16px 60px;
+  }
+  .wrap{max-width:920px;margin:0 auto;}
+  .hero{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom:1px solid var(--line); padding-bottom:18px; margin-bottom:22px;
+  }
+  .hero h1{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:-0.3px;}
+  .hero .car-meta{color:var(--ink-dim);font-size:13px;}
+  .hero .car-meta input{
+    background:transparent;border:none;border-bottom:1px dashed var(--line);
+    color:var(--ink); font-size:13px; font-family:inherit; padding:2px 4px; width:110px;
+  }
+  .hero .car-meta input:focus{outline:none;border-bottom-color:var(--amber);}
+
+  .odo{
+    font-family:'Roboto Mono', monospace; font-weight:700; font-size:28px;
+    color:var(--amber); letter-spacing:1px;
+  }
+  .odo-label{font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:1px;}
+
+  .sync-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px; margin-bottom:20px;
+  }
+  .sync-card .title{font-size:13px;font-weight:500;margin-bottom:8px;}
+  .sync-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .sync-row input{
+    flex:1; min-width:220px; background:var(--panel-2); border:1px solid var(--line);
+    border-radius:8px; color:var(--ink); padding:9px 10px; font-size:13px; font-family:inherit;
+  }
+  .sync-row input:focus{outline:none;border-color:var(--amber);}
+  .pill{
+    font-size:11px; padding:4px 10px; border-radius:999px; border:1px solid var(--line);
+    color:var(--ink-dim);
+  }
+  .pill.ok{color:var(--teal); border-color:var(--teal);}
+  .pill.off{color:var(--ink-dim);}
+  .pill.err{color:var(--red); border-color:var(--red);}
+
+  .cards{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:10px; margin-bottom:24px;
+  }
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 16px;
+  }
+  .card .label{font-size:12px;color:var(--ink-dim);margin-bottom:6px;}
+  .card .value{font-family:'Roboto Mono',monospace;font-size:20px;font-weight:700;}
+  .card.total{border-color:var(--amber-dim); background:linear-gradient(180deg,var(--panel-2),var(--panel));}
+  .card.total .value{color:var(--amber);}
+
+  .tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--line);}
+  .tab{
+    padding:10px 16px;cursor:pointer;font-size:14px;color:var(--ink-dim);
+    border-bottom:2px solid transparent; user-select:none;
+  }
+  .tab.active{color:var(--ink);border-bottom-color:var(--amber);font-weight:500;}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .form-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px; margin-bottom:18px;
+  }
+  .form-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{font-size:12px;color:var(--ink-dim);}
+  .field input, .field select{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    color:var(--ink); padding:9px 10px; font-size:14px; font-family:inherit;
+  }
+  .field input:focus, .field select:focus{outline:none;border-color:var(--amber);}
+  .field.full{grid-column:1/-1;}
+
+  .btn{
+    margin-top:14px; background:var(--amber); color:#1A1305; border:none;
+    padding:10px 22px; border-radius:8px; font-weight:700; font-size:14px;
+    cursor:pointer;
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .btn.secondary{
+    background:transparent;border:1px solid var(--line);color:var(--ink-dim);
+    margin-top:0; padding:9px 16px; font-weight:500;
+  }
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{
+    text-align:left; color:var(--ink-dim); font-weight:500; font-size:11px;
+    text-transform:uppercase; letter-spacing:0.5px; padding:8px 10px; border-bottom:1px solid var(--line);
+  }
+  td{padding:10px; border-bottom:1px solid var(--line); vertical-align:top;}
+  td.num{font-family:'Roboto Mono',monospace; text-align:right;}
+  tr:hover td{background:var(--panel-2);}
+  .del{cursor:pointer;color:var(--ink-dim);font-size:12px;}
+  .del:hover{color:var(--red);}
+
+  .table-wrap{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow-x:auto; padding:4px 8px;}
+  .status{font-size:12px;color:var(--ink-dim);margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div>
+      <h1>차계부</h1>
+      <div class="car-meta" style="display:flex;align-items:center;gap:8px;">
+        <select id="vehicleSelect" style="background:transparent;border:none;border-bottom:1px dashed var(--line);color:var(--ink);font-size:14px;font-weight:500;font-family:inherit;padding:2px 4px;">
+        </select>
+        <button class="btn secondary" style="padding:4px 10px;font-size:12px;" onclick="openAddVehicle()">+ 차량 추가</button>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div class="odo-label">평균 연비</div>
+      <div class="odo" id="avgEfficiency">- km/L</div>
+    </div>
+  </div>
+
+  <div class="form-card" id="addVehicleCard" style="display:none;">
+    <div class="form-grid">
+      <div class="field"><label>차량 번호</label><input type="text" id="v-number" placeholder="12가 3456"></div>
+      <div class="field"><label>차종</label><input type="text" id="v-model" placeholder="아반떼"></div>
+    </div>
+    <button class="btn" onclick="addVehicle()">차량 등록</button>
+    <button class="btn secondary" style="margin-left:8px;" onclick="closeAddVehicle()">취소</button>
+  </div>
+
+  <div class="sync-card">
+    <div class="title">구글시트 동기화 주소</div>
+    <div class="sync-row">
+      <input id="syncUrl" placeholder="https://script.google.com/macros/s/.../exec 를 붙여넣으세요" />
+      <button class="btn secondary" onclick="manualSync()">지금 동기화</button>
+      <span class="pill off" id="syncPill">미연결</span>
+    </div>
+    <div class="status" id="status">설치 안내는 함께 받은 apps_script.gs 파일을 참고해주세요.</div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="label">이번달 주유비</div><div class="value" id="cardFuelMonth">0원</div></div>
+    <div class="card"><div class="label">이번달 정비비</div><div class="value" id="cardMaintMonth">0원</div></div>
+    <div class="card"><div class="label">이번달 보험·기타</div><div class="value" id="cardEtcMonth">0원</div></div>
+    <div class="card total"><div class="label">누적 총 비용</div><div class="value" id="cardTotalAll">0원</div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="fuel">주유</div>
+    <div class="tab" data-tab="maint">정비</div>
+    <div class="tab" data-tab="etc">보험·기타</div>
+  </div>
+
+  <div class="panel active" id="panel-fuel">
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field"><label>날짜</label><input type="date" id="f-date"></div>
+        <div class="field"><label>주유소 상호</label><input type="text" id="f-shop" placeholder="GS칼텍스 역삼주유소"></div>
+        <div class="field full"><label>주소</label><input type="text" id="f-addr" placeholder="서울 강남구 테헤란로 123"></div>
+        <div class="field"><label>주행거리(km)</label><input type="number" id="f-odo" placeholder="12000"></div>
+        <div class="field"><label>주유량(L)</label><input type="number" step="0.01" id="f-liter" placeholder="35.5"></div>
+        <div class="field"><label>리터당 단가(원)</label><input type="number" id="f-price" placeholder="1650"></div>
+        <div class="field">
+          <label>결제수단</label>
+          <select id="f-pay"><option>카드</option><option>현금</option><option>기타</option></select>
+        </div>
+        <div class="field full"><label>메모</label><input type="text" id="f-memo" placeholder="선택 입력"></div>
+      </div>
+      <button class="btn" onclick="addFuel()">주유 기록 추가</button>
+    </div>
+    <div class="table-wrap"><table id="table-fuel"></table></div>
+  </div>
+
+  <div class="panel" id="panel-maint">
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field"><label>날짜</label><input type="date" id="m-date"></div>
+        <div class="field"><label>항목</label><input type="text" id="m-item" placeholder="엔진오일 교체"></div>
+        <div class="field"><label>정비소</label><input type="text" id="m-shop" placeholder="OO카센터"></div>
+        <div class="field"><label>금액(원)</label><input type="number" id="m-cost" placeholder="60000"></div>
+        <div class="field"><label>주행거리(km)</label><input type="number" id="m-odo" placeholder="12500"></div>
+        <div class="field"><label>다음 교체 예정(km)</label><input type="number" id="m-next" placeholder="17500"></div>
+        <div class="field full"><label>메모</label><input type="text" id="m-memo" placeholder="선택 입력"></div>
+      </div>
+      <button class="btn" onclick="addMaint()">정비 기록 추가</button>
+    </div>
+    <div class="table-wrap"><table id="table-maint"></table></div>
+  </div>
+
+  <div class="panel" id="panel-etc">
+    <div class="form-card">
+      <div class="form-grid">
+        <div class="field"><label>날짜</label><input type="date" id="e-date"></div>
+        <div class="field"><label>항목</label><input type="text" id="e-item" placeholder="자동차보험료"></div>
+        <div class="field">
+          <label>주기</label>
+          <select id="e-cycle"><option>연납</option><option>월납</option><option>일시</option></select>
+        </div>
+        <div class="field"><label>금액(원)</label><input type="number" id="e-cost" placeholder="850000"></div>
+        <div class="field full"><label>메모</label><input type="text" id="e-memo" placeholder="선택 입력"></div>
+      </div>
+      <button class="btn" onclick="addEtc()">기록 추가</button>
+    </div>
+    <div class="table-wrap"><table id="table-etc"></table></div>
+  </div>
+
+</div>
+
+<script>
+let data = { fuel: [], maint: [], etc: [], vehicles: [], meta: {} };
+let currentVehicleId = null;
+
+const won = n => Math.round(n||0).toLocaleString('ko-KR') + '원';
+const km = n => Math.round(n||0).toLocaleString('ko-KR') + 'km';
+
+function setPill(state, text){
+  const el = document.getElementById('syncPill');
+  el.className = 'pill ' + state;
+  el.textContent = text;
+}
+function setStatus(text){
+  document.getElementById('status').textContent = text;
+}
+function getUrl(){
+  return document.getElementById('syncUrl').value.trim();
+}
+
+document.getElementById('syncUrl').addEventListener('change', () => {
+  localStorage.setItem('carlog-sync-url', getUrl());
+  load();
+});
+
+async function load(){
+  const url = getUrl();
+  if(!url){
+    setPill('off','미연결');
+    renderVehicleSelect();
+    renderAll();
+    return;
+  }
+  setStatus('불러오는 중...');
+  try{
+    const res = await fetch(url, { method:'GET' });
+    const json = await res.json();
+    data.fuel = json.fuel || [];
+    data.maint = json.maint || [];
+    data.etc = json.etc || [];
+    data.vehicles = json.vehicles || [];
+    data.meta = json.meta || {};
+    if(data.meta.currentVehicleId && data.vehicles.some(v=>v.id===data.meta.currentVehicleId)){
+      currentVehicleId = data.meta.currentVehicleId;
+    } else if(data.vehicles.length){
+      currentVehicleId = data.vehicles[0].id;
+    }
+    setPill('ok','연결됨');
+    setStatus('불러왔습니다 · ' + new Date().toLocaleTimeString('ko-KR'));
+  }catch(e){
+    setPill('err','연결 실패');
+    setStatus('동기화 주소를 확인해주세요. (' + e.message + ')');
+  }
+  renderVehicleSelect();
+  renderAll();
+}
+
+async function save(){
+  const url = getUrl();
+  data.meta.currentVehicleId = currentVehicleId;
+  if(!url){
+    setPill('off','미연결');
+    return;
+  }
+  setStatus('저장 중...');
+  try{
+    await fetch(url, {
+      method:'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(data)
+    });
+    setPill('ok','연결됨');
+    setStatus('저장됨 · ' + new Date().toLocaleTimeString('ko-KR'));
+  }catch(e){
+    setPill('err','저장 실패');
+    setStatus('저장 실패: ' + e.message);
+  }
+}
+
+function manualSync(){
+  localStorage.setItem('carlog-sync-url', getUrl());
+  load();
+}
+
+function renderVehicleSelect(){
+  const sel = document.getElementById('vehicleSelect');
+  if(data.vehicles.length===0){
+    sel.innerHTML = '<option value="">등록된 차량 없음</option>';
+    currentVehicleId = null;
+    return;
+  }
+  sel.innerHTML = data.vehicles.map(v=>
+    `<option value="${v.id}">${v.number}${v.model ? ' · '+v.model : ''}</option>`
+  ).join('');
+  if(!currentVehicleId || !data.vehicles.some(v=>v.id===currentVehicleId)){
+    currentVehicleId = data.vehicles[0].id;
+  }
+  sel.value = currentVehicleId;
+}
+document.getElementById('vehicleSelect').addEventListener('change', (e)=>{
+  currentVehicleId = e.target.value;
+  save(); renderAll();
+});
+
+function openAddVehicle(){
+  document.getElementById('addVehicleCard').style.display = 'block';
+}
+function closeAddVehicle(){
+  document.getElementById('addVehicleCard').style.display = 'none';
+  document.getElementById('v-number').value = '';
+  document.getElementById('v-model').value = '';
+}
+function addVehicle(){
+  const number = document.getElementById('v-number').value.trim();
+  const model = document.getElementById('v-model').value.trim();
+  if(!number){ alert('차량 번호는 필수입니다.'); return; }
+  const id = 'v' + Date.now();
+  data.vehicles.push({ id, number, model });
+  currentVehicleId = id;
+  closeAddVehicle();
+  renderVehicleSelect();
+  save(); renderAll();
+}
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+
+function addFuel(){
+  if(!currentVehicleId){ alert('먼저 차량을 등록/선택해주세요.'); return; }
+  const v = {
+    vehicleId: currentVehicleId,
+    date: document.getElementById('f-date').value,
+    shop: document.getElementById('f-shop').value,
+    addr: document.getElementById('f-addr').value,
+    odo: parseFloat(document.getElementById('f-odo').value)||0,
+    liter: parseFloat(document.getElementById('f-liter').value)||0,
+    price: parseFloat(document.getElementById('f-price').value)||0,
+    pay: document.getElementById('f-pay').value,
+    memo: document.getElementById('f-memo').value
+  };
+  if(!v.date || !v.liter){ alert('날짜와 주유량은 필수입니다.'); return; }
+  data.fuel.push(v);
+  ['f-date','f-shop','f-addr','f-odo','f-liter','f-price','f-memo'].forEach(id=>document.getElementById(id).value='');
+  save(); renderAll();
+}
+function addMaint(){
+  if(!currentVehicleId){ alert('먼저 차량을 등록/선택해주세요.'); return; }
+  const v = {
+    vehicleId: currentVehicleId,
+    date: document.getElementById('m-date').value,
+    item: document.getElementById('m-item').value,
+    shop: document.getElementById('m-shop').value,
+    cost: parseFloat(document.getElementById('m-cost').value)||0,
+    odo: parseFloat(document.getElementById('m-odo').value)||0,
+    next: parseFloat(document.getElementById('m-next').value)||0,
+    memo: document.getElementById('m-memo').value
+  };
+  if(!v.date || !v.item){ alert('날짜와 항목은 필수입니다.'); return; }
+  data.maint.push(v);
+  ['m-date','m-item','m-shop','m-cost','m-odo','m-next','m-memo'].forEach(id=>document.getElementById(id).value='');
+  save(); renderAll();
+}
+function addEtc(){
+  if(!currentVehicleId){ alert('먼저 차량을 등록/선택해주세요.'); return; }
+  const v = {
+    vehicleId: currentVehicleId,
+    date: document.getElementById('e-date').value,
+    item: document.getElementById('e-item').value,
+    cycle: document.getElementById('e-cycle').value,
+    cost: parseFloat(document.getElementById('e-cost').value)||0,
+    memo: document.getElementById('e-memo').value
+  };
+  if(!v.date || !v.item){ alert('날짜와 항목은 필수입니다.'); return; }
+  data.etc.push(v);
+  ['e-date','e-item','e-cost','e-memo'].forEach(id=>document.getElementById(id).value='');
+  save(); renderAll();
+}
+function removeItem(type, idx){
+  data[type].splice(idx,1);
+  save(); renderAll();
+}
+
+function renderAll(){
+  renderFuel(); renderMaint(); renderEtc(); renderCards();
+}
+
+function renderFuel(){
+  const rows = data.fuel.filter(r=>r.vehicleId===currentVehicleId).sort((a,b)=>a.date<b.date?1:-1);
+  let html = '<tr><th>날짜</th><th>주유소</th><th>주소</th><th>주행거리</th><th>주유량</th><th>단가</th><th>결제</th><th>금액</th><th>메모</th><th></th></tr>';
+  rows.forEach((r)=>{
+    const idx = data.fuel.indexOf(r);
+    const amt = r.liter*r.price;
+    html += `<tr><td>${r.date}</td><td>${r.shop||''}</td><td>${r.addr||''}</td><td class="num">${km(r.odo)}</td><td class="num">${r.liter}L</td><td class="num">${won(r.price)}</td><td>${r.pay||''}</td><td class="num">${won(amt)}</td><td>${r.memo||''}</td><td class="del" onclick="removeItem('fuel',${idx})">삭제</td></tr>`;
+  });
+  document.getElementById('table-fuel').innerHTML = html;
+}
+function renderMaint(){
+  const rows = data.maint.filter(r=>r.vehicleId===currentVehicleId).sort((a,b)=>a.date<b.date?1:-1);
+  let html = '<tr><th>날짜</th><th>항목</th><th>정비소</th><th>금액</th><th>주행거리</th><th>다음예정</th><th>메모</th><th></th></tr>';
+  rows.forEach((r)=>{
+    const idx = data.maint.indexOf(r);
+    html += `<tr><td>${r.date}</td><td>${r.item}</td><td>${r.shop||''}</td><td class="num">${won(r.cost)}</td><td class="num">${km(r.odo)}</td><td class="num">${km(r.next)}</td><td>${r.memo||''}</td><td class="del" onclick="removeItem('maint',${idx})">삭제</td></tr>`;
+  });
+  document.getElementById('table-maint').innerHTML = html;
+}
+function renderEtc(){
+  const rows = data.etc.filter(r=>r.vehicleId===currentVehicleId).sort((a,b)=>a.date<b.date?1:-1);
+  let html = '<tr><th>날짜</th><th>항목</th><th>주기</th><th>금액</th><th>메모</th><th></th></tr>';
+  rows.forEach((r)=>{
+    const idx = data.etc.indexOf(r);
+    html += `<tr><td>${r.date}</td><td>${r.item}</td><td>${r.cycle}</td><td class="num">${won(r.cost)}</td><td>${r.memo||''}</td><td class="del" onclick="removeItem('etc',${idx})">삭제</td></tr>`;
+  });
+  document.getElementById('table-etc').innerHTML = html;
+}
+
+function renderCards(){
+  const now = new Date();
+  const inThisMonth = d => {
+    if(!d) return false;
+    const dt = new Date(d);
+    return dt.getMonth()===now.getMonth() && dt.getFullYear()===now.getFullYear();
+  };
+  const fuelAll = data.fuel.filter(r=>r.vehicleId===currentVehicleId);
+  const maintAll = data.maint.filter(r=>r.vehicleId===currentVehicleId);
+  const etcAll = data.etc.filter(r=>r.vehicleId===currentVehicleId);
+
+  const fuelMonth = fuelAll.filter(r=>inThisMonth(r.date)).reduce((s,r)=>s+r.liter*r.price,0);
+  const maintMonth = maintAll.filter(r=>inThisMonth(r.date)).reduce((s,r)=>s+r.cost,0);
+  const etcMonth = etcAll.filter(r=>inThisMonth(r.date)).reduce((s,r)=>s+r.cost,0);
+
+  const fuelTotal = fuelAll.reduce((s,r)=>s+r.liter*r.price,0);
+  const maintTotal = maintAll.reduce((s,r)=>s+r.cost,0);
+  const etcTotal = etcAll.reduce((s,r)=>s+r.cost,0);
+
+  document.getElementById('cardFuelMonth').textContent = won(fuelMonth);
+  document.getElementById('cardMaintMonth').textContent = won(maintMonth);
+  document.getElementById('cardEtcMonth').textContent = won(etcMonth);
+  document.getElementById('cardTotalAll').textContent = won(fuelTotal+maintTotal+etcTotal);
+
+  const odos = fuelAll.map(r=>r.odo).filter(n=>n>0);
+  const totalLiter = fuelAll.reduce((s,r)=>s+r.liter,0);
+  if(odos.length>=2 && totalLiter>0){
+    const dist = Math.max(...odos)-Math.min(...odos);
+    document.getElementById('avgEfficiency').textContent = (dist/totalLiter).toFixed(1)+' km/L';
+  } else {
+    document.getElementById('avgEfficiency').textContent = '- km/L';
+  }
+}
+
+(function init(){
+  const saved = localStorage.getItem('carlog-sync-url');
+  if(saved) document.getElementById('syncUrl').value = saved;
+  load();
+})();
+</script>
+</body>
+</html>
