@@ -154,14 +154,23 @@
   </div>
 
   <div class="sync-card">
-    <div class="title">구글시트 동기화 주소</div>
+    <div class="title">차계부 잠금 해제</div>
     <div class="sync-row">
-      <input id="syncUrl" type="password" placeholder="https://script.google.com/macros/s/.../exec?token=비밀값 을 붙여넣으세요" />
-      <button class="btn secondary" onclick="toggleSyncVisible()" id="toggleSyncBtn">보기</button>
-      <button class="btn secondary" onclick="manualSync()">지금 동기화</button>
+      <input id="unlockPw" type="password" placeholder="비밀번호" style="max-width:160px;" />
+      <button class="btn secondary" onclick="unlockWithPassword()">잠금 해제</button>
       <span class="pill off" id="syncPill">미연결</span>
     </div>
-    <div class="status" id="status">설치 안내는 함께 받은 apps_script.gs 파일을 참고해주세요.</div>
+    <div class="status" id="status">기기마다 처음 한 번만 비밀번호를 입력하면, 그 다음부터는 자동으로 불러와요.</div>
+    <div style="margin-top:10px;">
+      <a href="#" onclick="toggleAdvanced();return false;" style="font-size:12px;color:var(--ink-dim);text-decoration:underline;">고급: 동기화 주소 직접 입력</a>
+      <div id="advancedSync" style="display:none;margin-top:8px;">
+        <div class="sync-row">
+          <input id="syncUrl" type="password" placeholder="https://script.google.com/macros/s/.../exec?token=비밀값" />
+          <button class="btn secondary" onclick="toggleSyncVisible()" id="toggleSyncBtn">보기</button>
+          <button class="btn secondary" onclick="manualSync()">지금 동기화</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="cards">
@@ -235,6 +244,56 @@
 <script>
 let data = { fuel: [], maint: [], etc: [], vehicles: [], meta: {} };
 let currentVehicleId = null;
+
+// 비밀번호로 잠금 해제되는 암호화된 동기화 주소 (AES-GCM + PBKDF2)
+const ENCRYPTED_SYNC = {
+  salt: 'lVhakiABwaaUS/4Up0uM0A==',
+  iv: 'gnvFBvLgIY5sfLhx',
+  ct: 'scGurKOU6TaFKVnF3M4A3m3Op3ckW8mmAXYtfYCZJpHLeaaxtY5WhUld9+UMVMnMqyLqC88qgfT3f1wFS2J8EqImjexXPmjJMIosi+7CPv/i8VFRQ3l8P5b+DwbuNe9yrkqDbFFAqthZcD4ezycdMH3jaOljLYBL3NQQ4QXx+4hQqIIXRAZb4YDwR60ddMde3LjH2uj8xhWy7T9DNzvQM7hbTxb5',
+  iterations: 100000
+};
+
+function b64ToBuf(b64){
+  const bin = atob(b64);
+  const buf = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) buf[i] = bin.charCodeAt(i);
+  return buf;
+}
+
+async function decryptSyncUrl(password){
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt:b64ToBuf(ENCRYPTED_SYNC.salt), iterations:ENCRYPTED_SYNC.iterations, hash:'SHA-256' },
+    keyMaterial, { name:'AES-GCM', length:256 }, false, ['decrypt']
+  );
+  const plain = await crypto.subtle.decrypt(
+    { name:'AES-GCM', iv:b64ToBuf(ENCRYPTED_SYNC.iv) },
+    key, b64ToBuf(ENCRYPTED_SYNC.ct)
+  );
+  return new TextDecoder().decode(plain);
+}
+
+async function unlockWithPassword(){
+  const pw = document.getElementById('unlockPw').value;
+  if(!pw){ alert('비밀번호를 입력해주세요.'); return; }
+  setStatus('확인 중...');
+  try{
+    const url = await decryptSyncUrl(pw);
+    document.getElementById('syncUrl').value = url;
+    localStorage.setItem('carlog-sync-url', url);
+    document.getElementById('unlockPw').value = '';
+    await load();
+  }catch(e){
+    setPill('err','비밀번호 오류');
+    setStatus('비밀번호가 올바르지 않아요. 다시 시도해주세요.');
+  }
+}
+
+function toggleAdvanced(){
+  const el = document.getElementById('advancedSync');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
 
 const won = n => Math.round(n||0).toLocaleString('ko-KR') + '원';
 const km = n => Math.round(n||0).toLocaleString('ko-KR') + 'km';
@@ -513,6 +572,9 @@ function renderCards(){
 (function init(){
   const saved = localStorage.getItem('carlog-sync-url');
   if(saved) document.getElementById('syncUrl').value = saved;
+  document.getElementById('unlockPw').addEventListener('keydown', e=>{
+    if(e.key === 'Enter') unlockWithPassword();
+  });
   load();
 })();
 </script>
