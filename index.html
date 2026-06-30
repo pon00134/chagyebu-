@@ -156,7 +156,8 @@
   <div class="sync-card">
     <div class="title">구글시트 동기화 주소</div>
     <div class="sync-row">
-      <input id="syncUrl" placeholder="https://script.google.com/macros/s/.../exec 를 붙여넣으세요" />
+      <input id="syncUrl" type="password" placeholder="https://script.google.com/macros/s/.../exec?token=비밀값 을 붙여넣으세요" />
+      <button class="btn secondary" onclick="toggleSyncVisible()" id="toggleSyncBtn">보기</button>
       <button class="btn secondary" onclick="manualSync()">지금 동기화</button>
       <span class="pill off" id="syncPill">미연결</span>
     </div>
@@ -249,6 +250,17 @@ function setStatus(text){
 function getUrl(){
   return document.getElementById('syncUrl').value.trim();
 }
+function toggleSyncVisible(){
+  const input = document.getElementById('syncUrl');
+  const btn = document.getElementById('toggleSyncBtn');
+  if(input.type === 'password'){
+    input.type = 'text';
+    btn.textContent = '숨기기';
+  } else {
+    input.type = 'password';
+    btn.textContent = '보기';
+  }
+}
 
 document.getElementById('syncUrl').addEventListener('change', () => {
   localStorage.setItem('carlog-sync-url', getUrl());
@@ -267,6 +279,13 @@ async function load(){
   try{
     const res = await fetch(url, { method:'GET' });
     const json = await res.json();
+    if(json.error){
+      setPill('err','인증 실패');
+      setStatus('동기화 주소 끝에 ?token=... 값이 맞는지 확인해주세요.');
+      renderVehicleSelect();
+      renderAll();
+      return;
+    }
     data.fuel = json.fuel || [];
     data.maint = json.maint || [];
     data.etc = json.etc || [];
@@ -296,11 +315,17 @@ async function save(){
   }
   setStatus('저장 중...');
   try{
-    await fetch(url, {
+    const res = await fetch(url, {
       method:'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(data)
     });
+    const json = await res.json();
+    if(json.error){
+      setPill('err','인증 실패');
+      setStatus('동기화 주소 끝에 ?token=... 값이 맞는지 확인해주세요.');
+      return;
+    }
     setPill('ok','연결됨');
     setStatus('저장됨 · ' + new Date().toLocaleTimeString('ko-KR'));
   }catch(e){
